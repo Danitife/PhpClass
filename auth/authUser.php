@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['token'])) {
-    header("Location:" . dirname(__DIR__) . "/login.php?error=Please login to access the dashboard");
+    header("Location: login.php?error=Please login to access the dashboard");
     exit();
 }
 $token = $_SESSION['token'];
@@ -23,3 +23,9 @@ if (time() > strtotime($token_data['token_exp'])) {
 $user_query = "SELECT * FROM users WHERE id='$token_data[user_id]'";
 $user_response = mysqli_query($config, $user_query);
 $user = mysqli_fetch_assoc($user_response);
+
+$isAdmin = FALSE;
+if ($user['role'] == "admin") {
+    $isAdmin = TRUE;
+    $_SESSION['isAdmin'] = $isAdmin;
+}

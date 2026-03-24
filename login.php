@@ -35,19 +35,25 @@ if (isset($_POST["login_user"])) {
 
     try {
         // $token_query = "UPDATE tokens SET token='$token', token_exp='$token_exp' WHERE id='$user[id]'";
-        $token_query = "INSERT INTO tokens (user_id, token, token_exp) VALUES ('$user[id]', '$token', FROM_UNIXTIME($token_exp)) ON DUPLICATE KEY UPDATE token='$token', token_exp=FROM_UNIXTIME($token_exp), updated_at=NOW()";
-        $token_response = mysqli_query($config, $token_query);
-        if (!$token_response) {
-            echo "Error: " . mysqli_error($config);
+        $token_stmt = $config->prepare("INSERT INTO tokens (user_id, token, token_exp) VALUES (?, ?, FROM_UNIXTIME(?)) ON DUPLICATE KEY UPDATE token=?, token_exp=FROM_UNIXTIME(?), updated_at=NOW()");
+        // $token_query = "INSERT INTO tokens (user_id, token, token_exp) VALUES ('$user[id]', '$token', FROM_UNIXTIME($token_exp)) ON DUPLICATE KEY UPDATE token='$token', token_exp=FROM_UNIXTIME($token_exp), updated_at=NOW()";
+        $token_stmt->bind_param("issss", $user['id'], $token, $token_exp, $token, $token_exp);
+        if ($token_stmt->execute()) {
+            $_SESSION["token"] = $token;
+            header("Location: dashboard.php");
             exit();
         } else {
-            echo "Token updated successfully!";
+            echo "Error " . $token_stmt->error;
         }
-        $_SESSION["token"] = $token;
+        // $token_response = mysqli_query($config, $token_query);
+        // if (!$token_response) {
+        //     echo "Error: " . mysqli_error($config);
+        //     exit();
+        // } else {
+        //     echo "Token updated successfully!";
+        // }
         // $_SESSION["token_exp"] = $token_exp;
         // $_SESSION["email"] = $user['email'];
-        header("Location: dashboard.php");
-        exit();
     } catch (\Exception $e) {
         echo "Error: " . $e->getMessage();
         //throw $th;
@@ -88,8 +94,9 @@ if (isset($_POST["login_user"])) {
             <label for="">Password</label>
             <input type="password" class="form-control" name="password">
         </div>
-        <div class="mt-3">
+        <div class="mt-3 d-flex items-center">
             <button name="login_user" class="btn btn-dark">Login</button>
+            <p>Don't have an account? <a href="forms.php">Register</a></p>
         </div>
     </form>
 </body>

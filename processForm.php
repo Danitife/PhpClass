@@ -49,16 +49,32 @@ if ($password !== $c_password) {
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 echo "Hashed password: " . $hashed_password;
 
-include "config.php";
+include "database/config.php";
 
-$query = "INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$hashed_password')";
-$response = mysqli_query($config, $query);
-if (!$response) {
-    echo "Error: " . mysqli_error($config);
-    // header("Location: forms.php?error=Error inserting data into database");
-    exit();
-} else {
-    echo "User registered successfully!";
-    header("Location: login.php");
-    exit();
+// $query = "INSERT INTO users (username, email, password) VALUES ('$username', '$email', '$hashed_password')";
+// $response = mysqli_query($config, $query);
+// if (!$response) {
+//     echo "Error: " . mysqli_error($config);
+//     // header("Location: forms.php?error=Error inserting data into database");
+//     exit();
+// } else {
+//     echo "User registered successfully!";
+//     header("Location: login.php");
+//     exit();
+// }
+
+// Using prepared statements to prevent SQL injection
+try {
+    $stmt = $config->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $username, $email, $hashed_password);
+    if ($stmt->execute()) {
+        header("Location: login.php");
+        exit();
+    } else {
+        echo "Error: " . $stmt->error;
+        header("Location: forms.php?error=Error inserting data into database");
+        exit();
+    }
+} catch (\Exception $e) {
+    echo $e->getMessage();
 }
