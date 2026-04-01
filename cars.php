@@ -1,16 +1,13 @@
 <?php
-session_start();
-include  dirname(__DIR__) . "/database/config.php";
-if (!isset($_SESSION['isAdmin']) || $_SESSION['isAdmin'] !== TRUE) {
-    header("Location: ../dashboard.php");
-    exit();
-}
+include __DIR__ . "/auth/authUser.php";
 
 $all_cars_stmt = $config->prepare("SELECT * FROM cars");
 $all_cars_stmt->execute();
 $all_cars_response = $all_cars_stmt->get_result();
 $cars = $all_cars_response->fetch_all(MYSQLI_ASSOC);
+
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -19,19 +16,17 @@ $cars = $all_cars_response->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <title>All Cars</title>
+    <title>Document</title>
 </head>
 
 <body>
-    <?php include "../components/admin_nav.html"; ?>
-    <div class="d-flex justify-content-between align-items-center">
+    <main>
+        <?php include __DIR__ . "/components/navbar.html"; ?>
         <h1>All Cars</h1>
-        <a href="add_car.php" class="btn btn-primary">Add Cars</a>
-    </div>
-    <pre><?php if (count($cars) < 1) {
-                echo "No cars found";
-            } else {
-                echo "
+        <pre><?php if (count($cars) < 1) {
+                    echo "No cars found";
+                } else {
+                    echo "
                 <table class='table'>
                     <thead>
                         <tr>
@@ -45,26 +40,22 @@ $cars = $all_cars_response->fetch_all(MYSQLI_ASSOC);
                         </tr>
                     </thead>
                     <tbody>";
-                foreach ($cars as $car) {
-                    echo "<tr>
+                    foreach ($cars as $car) {
+                        echo "<tr>
                             <td>{$car['id']}</td>
                             <td>{$car['car_name']}</td>
                             <td>{$car['car_model']}</td>
                             <td>{$car['car_number']}</td>
                             <td>{$car['car_color']}</td>
                             <td>₦{$car['booking_price']}</td>
-                            <td>
-                                <a href='edit_car.php?id={$car['id']}' class='btn btn-warning'>Edit</a>
-                                <a href='delete_car.php?id={$car['id']}' class='btn btn-danger'>Delete</a>
-                            </td>
+                            <td><a href='services/book-ride.php?car_id={$car['id']}' class='btn btn-primary'>Book Ride</a></td>
                         </tr>";
-                }
-                echo "
+                    }
+                    echo "
                     </tbody>
                 </table>";
-            } ?></pre>
-
-
+                } ?></pre>
+    </main>
 </body>
 
 </html>

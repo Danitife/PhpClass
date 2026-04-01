@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('Africa/Lagos');
 if (!isset($_SESSION['token'])) {
     header("Location: login.php?error=Please login to access the dashboard");
     exit();
@@ -13,10 +14,9 @@ if (!$token_response) {
     exit();
 }
 $token_data = mysqli_fetch_assoc($token_response);
-print_r($token_data);
 if (time() > strtotime($token_data['token_exp'])) {
     // header("Location:" . dirname(__DIR__) . "/login.php?error=Session expired, please login again");
-    header("Location: login.php?error=Session expired, please login again");
+    header("Location:" . __DIR__ . "/login.php?error=Session expired, please login again");
     exit();
 }
 

@@ -30,7 +30,7 @@ if (isset($_POST["login_user"])) {
     session_start();
     $random_str = random_bytes(16);
     $token = bin2hex($random_str);
-    $token_exp = time() + 60;
+    $token_exp = time() + (60 * 5);
     echo $user['id'] . "<br>";
 
     try {
