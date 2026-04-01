@@ -34,6 +34,9 @@ if (isset($_POST['book_now'])) {
     echo "Error: " . $book_ride_stmt->error;
 }
 
+// If a car has been booked, the button should be showing "Booked" for other users and "Return Car" for the user that booked the car.
+
+
 ?>
 
 <!DOCTYPE html>
