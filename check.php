@@ -1,0 +1,3 @@
+<?php
+echo hex2bin("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9") . "<br>";
+echo bin2hex("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMDAzNjkiLCJjb21wYW55Ijoic2NpY3QuZWRvc3NpZXIuYXBwIiwiaWF0IjoxNzc4NTc4NDYzLCJleHAiOjE3Nzg1ODIwNjN9.zGaVPJDTbiBvPdZFtZ6ytjDAgtk_k7rwPon5KmzZrjc");
