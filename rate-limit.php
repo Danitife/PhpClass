@@ -1,10 +1,31 @@
 <?php
 // Rate-Limiting Bypass Demo
 //
-// A rate limiter is meant to stop brute force: "after 3 wrong passwords from
-// this IP, lock the IP out for 60 seconds". This page implements that — but
-// it gets the "this IP" part wrong, which is the single most common rate-
-// limit bug in the wild. The attacker controls the value used as the key.
+// WHAT IS RATE LIMITING?
+// Rate limiting is a defensive control that restricts how often someone can
+// attempt an action. It's essential for protecting against:
+//   - Brute force (trying many passwords)
+//   - Credential stuffing (testing stolen password lists)
+//   - Scraping (downloading the entire database)
+//   - DoS amplification (exhausting server resources)
+//   - Abuse (spam signups, rapid-fire requests)
+//
+// The premise: pick a KEY that identifies the requester (IP, username, API key),
+// count their requests per time window, and block when the count exceeds a limit.
+//
+// WHAT MAKES A GOOD KEY?
+// The key must identify the REAL ACTOR and be non-spoofable:
+//   Good: $_SERVER['REMOTE_ADDR']           (the TCP connection source)
+//   Bad:  $_SERVER['HTTP_X_FORWARDED_FOR']  (any HTTP client can spoof it)
+//   Bad:  user cookie                       (attacker can delete/clear it)
+//   Bad:  useragent or referer header       (trivial to change)
+//
+// THE BUG ON THIS PAGE:
+// This demo implements rate limiting correctly in concept — "3 strikes per 60s"
+// — but gets the KEY selection wrong. It reads X-Forwarded-For, which the
+// attacker fully controls. So an attacker just rotates the value and gets a
+// fresh 3-attempt bucket on every request. The rate limit "works" but it
+// limits nothing.
 //
 // We don't need MySQL — we'll store attempt counters in a flat JSON file.
 
