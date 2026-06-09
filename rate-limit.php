@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    -----------------------------------------------------------------------------
    First, get yourself blocked the honest way (3 wrong passwords in a row):
 
-       curl -X POST -d "user=admin&pass=wrong1" http://localhost/vunerability/rate-limit.php
+       curl -X POST -d "user=admin&pass=wrong1" http://localhost:8080/vunerability/rate-limit.php
        curl -X POST -d "user=admin&pass=wrong2" http://localhost/vunerability/rate-limit.php
        curl -X POST -d "user=admin&pass=wrong3" http://localhost/vunerability/rate-limit.php
        curl -X POST -d "user=admin&pass=wrong4" http://localhost/vunerability/rate-limit.php

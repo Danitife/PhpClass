@@ -26,10 +26,12 @@
 //   Expected result: 20 (two deposits). Actual: 15 (one deposit lost).
 //
 // WHY ARE THEY HARD TO CATCH?
-// The bug is intermittent. Run the code 100 times; maybe 80 times nothing
-// happens, 20 times the race triggers and you lose an update. So devs test
-// it locally, it works fine, they ship it, and it fails in production under
-// load. It's a nightmare to debug and nearly invisible to static analysis.
+// The bug is INTERMITTENT and requires CONCURRENT requests. When you click a
+// button once, the code runs serially — no race. But send TWO requests at the
+// EXACT SAME TIME (milliseconds apart), and they'll interleave. So devs test
+// locally with single clicks, it works fine, they ship it. Then it fails in
+// production when multiple users hit the endpoint at once. It's nearly
+// invisible in code review and impossible to catch with simple testing.
 //
 // IMPACT IN THE REAL WORLD:
 //   - Banking: two deposits both see the old balance, one is lost
@@ -178,7 +180,14 @@ $current_user = $users[$user_id] ?? ['balance' => 0, 'last_claim' => null];
 
     <p style="font-size:0.9em; color:#666;">
         <strong>To trigger the race condition:</strong><br>
-        Click the button rapidly, or run curl commands in parallel (see DEBUG section).
+        <strong>Single click = works fine</strong> (that's not the race). You need
+        <strong>multiple requests SIMULTANEOUSLY</strong> to trigger it.<br><br>
+        <strong>Option 1 (bash/curl):</strong> Copy the bash loop from DEBUG section
+        and run it in your terminal. This spawns 10 requests in parallel.<br><br>
+        <strong>Option 2 (DevTools):</strong> Open DevTools (F12) → Network.
+        Quickly click the button 3+ times. If two requests *overlap in time*
+        (both still processing while the other is reading), you might see
+        balance = $20 instead of $30 (a lost update).
     </p>
 
     <p><a href="?reset=1">[reset all balances]</a></p>
@@ -189,21 +198,24 @@ $current_user = $users[$user_id] ?? ['balance' => 0, 'last_claim' => null];
         Store file : <code><?= htmlspecialchars($store_path) ?></code><br>
         Current balance: $<?= htmlspecialchars((int)$current_user['balance']) ?><br>
         <br>
-        <strong>Parallel curl (bash):</strong><br>
-        <code style="display:block; white-space:pre-wrap; background:#eee; padding:8px; margin-top:8px;">
-            # Run these in parallel (note the &) to trigger the race
-            curl -X POST http://localhost/vunerability/race-condition.php &
-            curl -X POST http://localhost/vunerability/race-condition.php &
-            curl -X POST http://localhost/vunerability/race-condition.php &
-            wait
-            # Check the balance — likely less than $30!
+        <strong>⚡ RELIABLE WAY TO TRIGGER THE RACE (use curl):</strong><br>
+        <p style="color:#c00; font-weight:bold;">Open a terminal and run this command:</p>
+        <code style="display:block; white-space:pre-wrap; background:#eee; padding:8px; margin-top:8px; font-family:monospace;">
+for i in {1..10}; do
+  curl -X POST http://localhost/vunerability/race-condition.php &
+done; wait
 
-            # Or use a loop
-            for i in {1..10}; do
-            curl -X POST http://localhost/vunerability/race-condition.php &
-            done; wait
-            # Expected: $100. Actual: often $50–$80 due to lost updates.
+# Then refresh this page to see the balance.
+# Expected: $100 (10 requests × $10)
+# Actual: often $50–$80 due to lost updates from the race condition.
+# Run it multiple times — you'll see different totals each time!
         </code>
+        <p style="font-size:0.85em; color:#666; margin-top:8px;">
+            The <code>&</code> spawns 10 requests in parallel (concurrently).
+            The <code>wait</code> pauses until all finish. This forces them to
+            interleave and trigger the race. Clicking the button manually is too
+            slow — there's too much time between clicks for a race to occur.
+        </p>
     </div>
 
 </body>
