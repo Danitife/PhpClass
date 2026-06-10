@@ -44,7 +44,7 @@
 // REPRODUCE and SEE the race. In production you'd use a database with
 // transactions, atomic operations, or a real cache like Redis.
 
-$store_path = sys_get_temp_dir() . '/vuln_race_condition.json';
+$store_path = __DIR__ . '/.race_state.json';
 
 function load_users($path)
 {
@@ -53,7 +53,12 @@ function load_users($path)
 }
 function save_users($path, $users)
 {
-    file_put_contents($path, json_encode($users));
+    $result = file_put_contents($path, json_encode($users));
+    if ($result === false) {
+        error_log("Failed to write to $path");
+        return false;
+    }
+    return true;
 }
 
 if (isset($_GET['reset'])) {
@@ -63,11 +68,12 @@ if (isset($_GET['reset'])) {
 }
 
 // Simulate a logged-in user (in real code this would be $_SESSION['user_id']).
-$user_id = 'student_' . substr(md5($_SERVER['REMOTE_ADDR']), 0, 8);
+// Using a fixed user_id so browser and curl requests reference the same account.
+$user_id = 'test_user';
 
 $users = load_users($store_path);
 if (!isset($users[$user_id])) {
-    $users[$user_id] = ['balance' => 0, 'last_claim' => null];
+    $users[$user_id] = ['balance' => 0];
 }
 
 $message = null;
@@ -76,46 +82,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ------------------------------------------------------------------
     // VULNERABLE LOGIC — Time-of-check vs time-of-use race condition
     //
-    // This is the classic TOCTOU bug. We check, then act. But between
-    // the check and the act, another request can slip through.
+    // This is the classic TOCTOU bug. We read, modify, and write without
+    // a lock. Between the read and write, another request can slip through.
     //
     // Step 1: READ the current state from storage
-    // Step 2: CHECK if the user qualifies (haven't claimed today)
-    // Step 3: COMPUTE the new state (balance + 10)
-    // Step 4: WRITE the new state back
+    // Step 2: COMPUTE the new state (balance + 10)
+    // Step 3: WRITE the new state back
     //
     // A second concurrent request can enter at Step 1 while the first is
     // still at Step 3, and they race to write back different states.
     // Whoever writes last wins. The other's update is lost.
+    //
+    // NOTE: We removed the "claim once per day" check that a real app would
+    // have. That check would gate this endpoint. Here we're focusing ONLY on
+    // the read-modify-write race, so every request increments the balance.
     // ------------------------------------------------------------------
 
-    $today = date('Y-m-d');
+    // Step 1: READ the current state
+    $current_balance = $users[$user_id]['balance'];
 
-    // Step 1 & 2: READ and CHECK
-    if ($users[$user_id]['last_claim'] === $today) {
-        $message = "Already claimed today. Come back tomorrow.";
-    } else {
-        // Step 3: COMPUTE the new state
-        $users[$user_id]['balance'] += 10;
-        $users[$user_id]['last_claim'] = $today;
+    // Step 2: COMPUTE the new state
+    $new_balance = $current_balance + 10;
 
-        // Step 4: WRITE the new state
-        save_users($store_path, $users);
+    // Step 3: WRITE the new state back
+    $users[$user_id]['balance'] = $new_balance;
+    save_users($store_path, $users);
 
-        $message = "Bonus claimed! +$10. New balance: $" . $users[$user_id]['balance'];
-    }
+    $message = "Added $10. New balance: $" . $new_balance;
 }
 
 // Refresh state for display (in case another request changed it)
 $users = load_users($store_path);
-$current_user = $users[$user_id] ?? ['balance' => 0, 'last_claim' => null];
+$current_user = $users[$user_id] ?? ['balance' => 0];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Daily Bonus (race condition)</title>
+    <title>Score Counter (race condition demo)</title>
     <style>
         body {
             font-family: sans-serif;
@@ -162,19 +167,18 @@ $current_user = $users[$user_id] ?? ['balance' => 0, 'last_claim' => null];
 
 <body>
 
-    <h2>Daily Bonus (claim once per day)</h2>
-    <p class="balance">Your balance: $<?= htmlspecialchars((int)$current_user['balance']) ?></p>
-    <p>Last claimed: <?= htmlspecialchars($current_user['last_claim'] ?? 'never') ?></p>
+    <h2>Score Counter (read-modify-write race condition)</h2>
+    <p class="balance">Your score: $<?= htmlspecialchars((int)$current_user['balance']) ?></p>
 
     <?php if ($message): ?>
-        <div class="msg <?= strpos($message, 'Already') !== false ? 'bad' : 'ok' ?>">
+        <div class="msg ok">
             <?= htmlspecialchars($message) ?>
         </div>
     <?php endif; ?>
 
     <div class="card">
         <form method="POST">
-            <button type="submit">Claim Daily Bonus ($10)</button>
+            <button type="submit">Add $10 to Score</button>
         </form>
     </div>
 
@@ -194,22 +198,24 @@ $current_user = $users[$user_id] ?? ['balance' => 0, 'last_claim' => null];
 
     <div class="debug">
         <strong>DEBUG</strong><br>
-        Your user ID: <code><?= htmlspecialchars($user_id) ?></code><br>
+        User ID (shared): <code><?= htmlspecialchars($user_id) ?></code><br>
         Store file : <code><?= htmlspecialchars($store_path) ?></code><br>
         Current balance: $<?= htmlspecialchars((int)$current_user['balance']) ?><br>
         <br>
         <strong>⚡ RELIABLE WAY TO TRIGGER THE RACE (use curl):</strong><br>
-        <p style="color:#c00; font-weight:bold;">Open a terminal and run this command:</p>
+        <p style="color:#c00; font-weight:bold;">1. Open a terminal and run this command:</p>
         <code style="display:block; white-space:pre-wrap; background:#eee; padding:8px; margin-top:8px; font-family:monospace;">
 for i in {1..10}; do
   curl -X POST http://localhost/vunerability/race-condition.php &
 done; wait
-
-# Then refresh this page to see the balance.
-# Expected: $100 (10 requests × $10)
-# Actual: often $50–$80 due to lost updates from the race condition.
-# Run it multiple times — you'll see different totals each time!
         </code>
+        <p style="color:#c00; font-weight:bold;">2. Refresh this page and check your score:</p>
+        <ul style="font-size:0.9em; color:#666;">
+            <li><strong>Expected:</strong> Score = $100 (10 requests × $10)</li>
+            <li><strong>Actual:</strong> Often $50–$80 due to lost updates</li>
+            <li><strong>Why?</strong> Requests 1–10 all read the old balance concurrently, compute new values, write back. Some writes overwrite others.</li>
+            <li><strong>Try it again:</strong> Click [reset], run the loop again. You'll get a different total each time!</li>
+        </ul>
         <p style="font-size:0.85em; color:#666; margin-top:8px;">
             The <code>&</code> spawns 10 requests in parallel (concurrently).
             The <code>wait</code> pauses until all finish. This forces them to
