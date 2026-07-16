@@ -62,4 +62,54 @@ doSomething("Smiling");
 // Task 8: Password HashingConvert the plain text string "Secret123" into a secure, technical bcrypt hash.
 // Task 9: Slug GeneratorConvert "PHP 8.1 New Features!" into a URL-friendly slug like "php-8-1-new-features".
 // Task 10: String MaskingMask a credit card string "4111111111111234" so it outputs as "************1234".
+
+
+// ARRAYS
+
+$courses = ["PHP", "JavaScript", "Python", "Java"];
+$hobbies = array("Reading", "Writing", "Coding", "Gaming");
+
+echo $courses[2] . "<br>"; // Python
+echo $hobbies[1] . "<br>"; // Writing
+
+array_push($courses, "C++"); // adds an element to the end of the array
+array_pop($hobbies); // removes the last element of the array
+in_array("PHP", $courses); // checks if an element exists in the array
+array_shift($courses); // removes the first element of the array
+array_unshift($courses, "C#"); // adds an element to the beginning of the array
+print_r(array_slice($courses, 1, 2)); // returns a portion of the array
+print_r(array_splice($courses, 1, 2)); // removes a portion of the array
+array_merge($courses, $hobbies); // merges two arrays
+array_unique($courses); // removes duplicate values from the array
+array_reverse($courses); // reverses the order of the array
+array_search("Python", $courses); // returns the index of the element in the array
+// print_r(array_sort($courses)); // sorts the array in ascending order
+
+for($i = 0; $i < count($hobbies); $i++){
+    echo "<h3>I love $hobbies[$i]</h3>";
+}
+
+// foreach($courses as $crs){
+//     echo "<h3>I love $crs</h3>";
+// }
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <title>Document</title>
+</head>
+<body>
+    <main>
+        <ul class="list-group bg-dark text-light p-2">
+            <?php foreach($courses as $cours){
+                echo "<li class='list-group-item'>I love $cours</li>";
+            }
+            ?>
+        </ul>
+    </main>
+</body>
+</html>
