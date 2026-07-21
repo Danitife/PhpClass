@@ -104,6 +104,8 @@ for($i = 0; $i < count($hobbies); $i++){
 </head>
 <body>
     <main>
+        <?php include 'components/navbar.html'; ?>
+        
         <ul class="list-group bg-dark text-light p-2">
             <?php foreach($courses as $cours){
                 echo "<li class='list-group-item'>I love $cours</li>";
