@@ -1,17 +1,28 @@
 <?php
+session_start();
+$email = $_POST['email'];
+if(isset($_POST['login'])){
+    $password = $_POST['password'];
 
-// PHP SUPER GLOBALS
-// $_GET
-// $_POST
-// $_REQUEST
-// $_SESSION
-// $_SERVER
-// $_COOKIE
-// $_FILES
+    if(empty($email) || empty($password)){
+        header("Location: login.php?error=Please fill in all required fields");
+        exit;
+    }
 
-$first_name = $_POST['first_name'];
-echo $first_name;
+    if(isset($_SESSION['user'])){
+        $user = $_SESSION['user'];
+        if($email === $user['email'] && $password === $user['password']){
+            header("Location: dashboard.php");
+            exit;
+        }else{
+            header("Location: login.php?error=Invalid email or password");
+            exit;
+        }
+    }
+}
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -22,7 +33,7 @@ echo $first_name;
     <title>Document</title>
 </head>
 <body>
-    <form action="process.php" method="post" class="w-50 mx-auto mt-5 p-3 border border-dark rounded">
+    <form action="login.php" method="post" class="w-50 mx-auto mt-5 p-3 border border-dark rounded">
         <?php if(isset($_GET['error'])){ ?>
 
             <div class="alert alert-danger" role="alert">
@@ -31,15 +42,6 @@ echo $first_name;
             
         <?php } ?>
 
-
-        <div class="form-group">
-            <label for="first_name">First Name:</label>
-            <input class="form-control" type="text" name="first_name">
-        </div>
-        <div class="form-group">
-            <label for="last_name">Last Name:</label>
-            <input class="form-control" type="text" name="last_name">
-        </div>
         <div class="form-group">
             <label for="email">Email:</label>
             <input class="form-control" type="email" name="email">
@@ -49,7 +51,7 @@ echo $first_name;
             <input class="form-control" type="password" name="password">
         </div>
         <div>
-            <button class="btn btn-dark mt-3" type="submit">Register</button>
+            <button name="login" class="btn btn-dark mt-3" type="submit">Login</button>
         </div>
     </form>
 </body>
