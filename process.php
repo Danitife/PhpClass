@@ -51,15 +51,38 @@ echo "Last Name: " . $last_name . "<br>";
 echo "Email: " . $email . "<br>";
 echo "Password: " . $password . "<br>";
 
-$user = [
-    'first_name' => $first_name,
-    'last_name' => $last_name,
-    'email' => $email,
-    'password' => $password
-];
 
-session_start();
-$_SESSION['user'] = $user;
-header("Location: login.php");
+// host
+// username
+// password
+// database name
+
+$conn = mysqli_connect("localhost", "root", "", "job_hunt");
+
+if(!$conn){
+    echo "Connection failed: " . mysqli_connect_error(); // throw an error when database does not connect
+}else{
+    echo "Connection successful";
+}
+
+$query = "INSERT INTO users (first_name, last_name, email, password) VALUES ('$first_name', '$last_name', '$email', '$password')";
+$action = mysqli_query($conn, $query);
+
+if(!$action){
+    echo "Error : Action not successfull" . mysqli_error() ;
+}else{
+    echo "Account created";
+}
+
+// $user = [
+//     'first_name' => $first_name,
+//     'last_name' => $last_name,
+//     'email' => $email,
+//     'password' => $password
+// ];
+
+// session_start();
+// $_SESSION['user'] = $user;
+// header("Location: login.php");
 exit;
 ?>
