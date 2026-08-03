@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // be applied again after a reset, or by a different browser/session.
     // The real check belongs in the database: "has THIS user redeemed this
     // code?" — and it must be atomic to survive race conditions.
-    // ------------------------------------------------------------------
+    // ------------------------------------------------------------------ 100 99.99 * 1 50.01
     if ($coupon === 'SAVE50' && !in_array($coupon, $_SESSION['used_coupons'])) {
         $total = $total * 0.5;
         $_SESSION['used_coupons'][] = $coupon;

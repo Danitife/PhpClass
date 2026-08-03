@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    container_name: api-web
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Node debugger port (exposed!)
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=mysql
+      - DB_USER=api_user
+      - DB_PASSWORD=SecureDbPass2024!
+      - REDIS_URL=redis://redis:6379
+      - API_PORT=3000
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - internal
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+
+  mysql:
+    image: mysql:8.0.32
+    container_name: db-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: RootSecurePass123!
+      MYSQL_DATABASE: production_db
+      MYSQL_USER: api_user
+      MYSQL_PASSWORD: SecureDbPass2024!
+    ports:
+      - "3306:3306"  # MySQL accessible from host (and internet!)
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: cache-redis
+    command: redis-server --requirepass RedisPass456!
+    ports:
+      - "6379:6379"  # Redis accessible from host
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: db-adminer
+    ports:
+      - "8080:8080"  # PhpMyAdmin-like tool exposed!
+    depends_on:
+      - mysql
+    networks:
+      - internal
+    environment:
+      - ADMINER_DEFAULT_SERVER=mysql
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  internal:
+    driver: bridge

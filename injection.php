@@ -32,8 +32,11 @@
  * ============================================================
  */
 
+// error_reporting(E_ALL);
+error_reporting(-1);
+
 $host = 'localhost';
-$db   = 'vulnerable_app';
+$db   = 'blog';
 $user = 'root';
 $pass = '';
 
@@ -41,6 +44,8 @@ $conn = mysqli_connect($host, $user, $pass, $db);
 
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
+}else{
+    echo "<div class='debug'>DEBUG — Connected to database: <code>" . htmlspecialchars($db) . "</code></div>";
 }
 
 $error   = '';
@@ -51,15 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password']; // ❌ No sanitisation
 
     // ❌ VULNERABLE: User input directly concatenated into SQL
-    $sql    = "SELECT * FROM users WHERE username='$username' AND password='$password'";
+    $sql    = "SELECT * FROM users WHERE first_name='$username' AND password='$password'";
     $result = mysqli_query($conn, $sql);
 
+    
     // ❌ Also exposes the raw query — never do this in production
     echo "<div class='debug'>DEBUG — Query executed: <code>" . htmlspecialchars($sql) . "</code></div>";
-
+    
+    exit;
     if ($result && mysqli_num_rows($result) > 0) {
         $user_row = mysqli_fetch_assoc($result);
-        $message  = "✅ Welcome, " . $user_row['username'] . "! You are logged in.";
+        $message  = "✅ Welcome, " . $user_row['first_name'] . "! You are logged in.";
     } else {
         $error = "❌ Invalid username or password.";
     }
