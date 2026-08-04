@@ -57,13 +57,15 @@ echo "Password: " . $password . "<br>";
 // password
 // database name
 
-$conn = mysqli_connect("localhost", "root", "", "job_hunt");
+// $conn = mysqli_connect("localhost", "root", "", "job_hunt");
 
-if(!$conn){
-    echo "Connection failed: " . mysqli_connect_error(); // throw an error when database does not connect
-}else{
-    echo "Connection successful";
-}
+// if(!$conn){
+//     echo "Connection failed: " . mysqli_connect_error(); // throw an error when database does not connect
+// }else{
+//     echo "Connection successful";
+// }
+
+include "connection.php";
 
 $query = "INSERT INTO users (first_name, last_name, email, password) VALUES ('$first_name', '$last_name', '$email', '$password')";
 $action = mysqli_query($conn, $query);

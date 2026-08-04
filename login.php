@@ -1,4 +1,5 @@
 <?php
+include "connection.php";
 session_start();
 $email = $_POST['email'];
 if(isset($_POST['login'])){
@@ -9,16 +10,33 @@ if(isset($_POST['login'])){
         exit;
     }
 
-    if(isset($_SESSION['user'])){
-        $user = $_SESSION['user'];
-        if($email === $user['email'] && $password === $user['password']){
+    $query = "SELECT email, password FROM users WHERE email='$email'";
+
+    $exec = mysqli_query($conn, $query);
+
+    $user = mysqli_fetch_assoc($exec);
+
+    if($user){
+        if($user['password'] == $password){
+            $_SESSION['loggedinEmail'] = $email;
             header("Location: dashboard.php");
-            exit;
         }else{
             header("Location: login.php?error=Invalid email or password");
-            exit;
         }
+    }else{
+            header("Location: login.php?error=Account not founf");
     }
+    // if(isset($_SESSION['user'])){
+    //     $user = $_SESSION['user'];
+    //     if($email === $user['email'] && $password === $user['password']){
+    //         $_SESSION['loggedinEmail'] = $email;
+    //         header("Location: dashboard.php");
+    //         exit;
+    //     }else{
+    //         header("Location: login.php?error=Invalid email or password");
+    //         exit;
+    //     }
+    // }
 }
 ?>
 
