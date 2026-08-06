@@ -10,7 +10,7 @@ if(isset($_POST['login'])){
         exit;
     }
 
-    $query = "SELECT email, password FROM users WHERE email='$email'";
+    $query = "SELECT email, password, role FROM users WHERE email='$email'";
 
     $exec = mysqli_query($conn, $query);
 
@@ -19,7 +19,14 @@ if(isset($_POST['login'])){
     if($user){
         if($user['password'] == $password){
             $_SESSION['loggedinEmail'] = $email;
-            header("Location: dashboard.php");
+            // print_r($user);
+            if($user['role'] == 'admin'){
+                header("Location: admin.php");
+                exit();
+            }else{
+                header("Location: dashboard.php");
+                exit();
+            }
         }else{
             header("Location: login.php?error=Invalid email or password");
         }

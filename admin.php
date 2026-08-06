@@ -1,15 +1,22 @@
 <?php
-$conn = mysqli_connect("127.0.0.1", "root", "", "job_hunt");
+include "connection.php";
+include "auth.php";
 
-if(!$conn){
-    echo "Connection failed: " . mysqli_connect_error(); // throw an error when database does not connect
+print_r($user);
+
+echo "<br>";
+echo "<br>";
+echo "<br>";
+if($user['role'] !== 'admin'){
+    header("Location: dashboard.php");
+    exit();
 }
 
 $query = "SELECT * FROM users";
 $exec = mysqli_query($conn, $query);
 $users = mysqli_fetch_all($exec, MYSQLI_ASSOC);
 
-print_r($users);
+// print_r($users);
 ?>
 
 <!DOCTYPE html>
