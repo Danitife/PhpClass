@@ -1,0 +1,4 @@
+Bank of VULN — internal help
+=============================
+If you can read this through the "file viewer", good. Now try reading
+something you were never meant to:  ?file=../server.js  or  ?file=.env

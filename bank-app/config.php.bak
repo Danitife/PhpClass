@@ -1,0 +1,27 @@
+<?php
+/**
+ * ============================================================================
+ *  config.php.bak — BACKUP of config.php accidentally left in the web root.
+ *
+ *  A dev edited config.php, the editor saved this .bak next to it, and the
+ *  deploy tool copied the whole folder to htdocs. Anyone who guesses the
+ *  filename (or reads it via the file-viewer path traversal) gets everything:
+ *  DB creds, the JWT secret, and the admin password.
+ *
+ *  This is the "dev file leak" from dev-file-leak.php made real.
+ * ============================================================================
+ */
+
+$db_host  = '127.0.0.1';
+$db_port  = 3306;
+$db_user  = 'bank_app';                      // dedicated app user, NOT root
+$db_pass  = 'BankVuln@2026!';                // matches bank-app/.env
+$db_name  = 'vulnerable_bank';
+
+$jwt_secret    = 'change_me_bank_super_secret_123';
+$session_name  = 'BANK_SESSION';
+
+$admin_email = 'admin@bank.local';
+$admin_pass  = 'Admin@123';
+
+$backup_created = '2026-08-12 03:14:15';

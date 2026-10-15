@@ -1,0 +1,26 @@
+{
+  "name": "node-bank-of-vuln",
+  "version": "1.0.0",
+  "description": "Deliberately vulnerable Node.js + MongoDB banking lab (training only). NoSQL-injection port of the PHP/MySQL Bank of VULN.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "mongo:up": "docker compose up -d",
+    "mongo:down": "docker compose down"
+  },
+  "dependencies": {
+    "cookie-parser": "1.4.6",
+    "express": "4.18.2",
+    "express-session": "1.17.3",
+    "mongodb": "6.3.0"
+  },
+  "optionalDependencies": {
+    "mongodb-memory-server": "9.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

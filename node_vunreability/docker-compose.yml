@@ -1,0 +1,11 @@
+# Spin up a throwaway MongoDB for the lab:
+#   docker compose up -d      (or: npm run mongo:up)
+# No auth on purpose — this is a localhost-only training database.
+services:
+  mongo:
+    image: mongo:7
+    container_name: node-bank-of-vuln-mongo
+    ports:
+      - "27017:27017"
+    # Ephemeral: no named volume, so the data resets when the container is
+    # removed. The app re-seeds the four accounts on next start anyway.

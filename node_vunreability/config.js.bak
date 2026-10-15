@@ -1,0 +1,24 @@
+/**
+ * ============================================================================
+ *  config.js.bak — BACKUP of config.js accidentally left in the web root.
+ *
+ *  A dev edited config.js, the editor saved this .bak next to it, and the
+ *  deploy copied the whole folder. Anyone who guesses the filename (or reads
+ *  it via the file-viewer path traversal, or just GET /config.js.bak) gets
+ *  everything: the Mongo URL, the JWT secret, and the admin password.
+ *
+ *  This is the "dev file leak" class made real, in Node form.
+ * ============================================================================
+ */
+export const config = {
+  mongoUrl: 'mongodb://127.0.0.1:27017',
+  dbName: 'vulnerable_bank',
+
+  jwtSecret: 'change_me_bank_super_secret_123',
+  sessionName: 'BANK_SESSION',
+
+  adminEmail: 'admin@bank.local',
+  adminPass: 'Admin@123',
+
+  backupCreated: '2026-08-12 03:14:15',
+};

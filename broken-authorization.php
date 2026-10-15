@@ -27,7 +27,7 @@ $logged_in_role    = $_COOKIE['role'];
 // -----------------------------------------------------------------------------
 $id = $_GET['id'] ?? $logged_in_user_id;
 
-$query  = "SELECT id, fullname, email, phone, password FROM users WHERE id='$id'";
+$query  = "SELECT id, first_name, last_name, email, password, role FROM users WHERE id='$id'";
 $result = mysqli_query($database, $query);
 
 // -----------------------------------------------------------------------------
@@ -83,11 +83,12 @@ if ($show_admin_panel) {
     // Notice: we only check the COOKIE (which the client controls).
     // A real check must use a server-side session, not a cookie value.
     if ($logged_in_role === 'admin') {
-        $all = mysqli_query($database, "SELECT id, fullname, email, password FROM users");
-        echo "<table><tr><th>id</th><th>fullname</th><th>email</th><th>password</th></tr>";
+        $all = mysqli_query($database, "SELECT id, first_name, last_name, email, password FROM users");
+        echo "<table><tr><th>id</th><th>first_name</th><th>last_name</th><th>email</th><th>password</th></tr>";
         while ($row = mysqli_fetch_assoc($all)) {
             echo "<tr><td>{$row['id']}</td><td>"
-                . htmlspecialchars($row['fullname']) . "</td><td>"
+                . htmlspecialchars($row['first_name']) . "</td><td>"
+                . htmlspecialchars($row['last_name']) . "</td><td>"
                 . htmlspecialchars($row['email']) . "</td><td>"
                 . htmlspecialchars($row['password']) . "</td></tr>";
         }
