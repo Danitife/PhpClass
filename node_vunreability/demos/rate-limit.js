@@ -34,7 +34,6 @@ const WINDOW = 60_000; // per 60s
 // ============================================================================
 // VULNERABLE
 // ============================================================================
-
 /** VULN — key is taken from the client-controlled X-Forwarded-For header. */
 export function makeVulnLimiter() {
   const state = new Map();
