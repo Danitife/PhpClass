@@ -1,33 +1,43 @@
 /**
  * ============================================================================
- * FILE EXPOSURE — Path Traversal, LFI → RCE, and Source Disclosure (Node.js)
+ * FILE EXPOSURE (Path Traversal, LFI, Source Disclosure) — Node.js
  * ============================================================================
- * Node port of file-exposure.php.  Run it:   node demos/file-exposure.js
+ * Run it:   node demos/file-exposure.js
  * (It only touches the filesystem — no database, no network.)
  *
- * WHAT IS FILE EXPOSURE?
- * Any bug where the server hands the attacker a file they were never meant to
- * see — source code, config, credentials, logs, /etc/passwd, other users'
- * uploads. Three flavours show up constantly:
- *     (a) Source disclosure  — the server returns server-side source as text
- *     (b) Path traversal     — attacker climbs out of the intended folder
- *     (c) Local File Inclusion (LFI) — the server EXECUTES an attacker's file
+ * THINK OF IT LIKE A HOTEL.
+ * You hand the front desk your room number and they fetch what's in that room.
+ * That's fine — until a guest writes "../manager's office" on the slip and the
+ * clerk, following it literally, walks out of the guest floor and brings back
+ * the manager's private files. "File exposure" is any bug where the server
+ * fetches a file the user should never get to see.
+ *
+ * THE THREE VERSIONS YOU'LL SEE (plain English):
+ *   (a) Source disclosure — the server shows you its OWN code as text, so any
+ *       passwords written in that code are now yours.
+ *   (b) Path traversal    — the user sneaks "../" into a filename to walk UP
+ *       out of the intended folder and read files elsewhere on the computer.
+ *   (c) LFI (Local File Inclusion) — worse: the server doesn't just READ the
+ *       file the user picked, it RUNS it. If the attacker can get their own
+ *       code onto the server first, this runs it = full takeover (called RCE,
+ *       "remote code execution").
  *
  * ----------------------------------------------------------------------------
- * STEP-BY-STEP: why the vulnerable code below is broken
+ * WHY THE CODE BELOW IS BROKEN (step by step)
  * ----------------------------------------------------------------------------
- * 1. The filename comes straight from the request (?file=) and is glued onto a
- *    base directory with path.join(). No allowlist, no containment check.
- * 2. The string "../" has special meaning to the filesystem. path.join happily
- *    resolves it, so "../../../../etc/passwd" climbs to the root and back down
- *    into any file the Node process can read.
- * 3. Reading a .js file as TEXT dumps its source — including secrets (the
- *    "source disclosure" case). In the browser the file would normally run;
- *    reading it as bytes bypasses that.
- * 4. The ?page= handler calls require() on a user-controlled path. require()
- *    EXECUTES the module's top-level code. If an attacker can plant a .js file
- *    anywhere (upload, log poisoning, /tmp), pointing ?page= at it = RCE.
- *      - In PHP this is include(); in Node it's require()/import()/eval().
+ * 1. The filename comes straight from the user (the ?file= in the URL) and is
+ *    stuck onto a folder path. The code never checks it's a file we meant to
+ *    share.
+ * 2. "../" means "go up one folder" (same as `cd ..` in a terminal). Chain a
+ *    few together — "../../../../etc/passwd" — and you climb all the way to the
+ *    top of the disk, then down into any file the server is allowed to open.
+ * 3. A .js file opened as TEXT just shows its letters — including any secret
+ *    written inside it. Normally that file would RUN and hide its code; reading
+ *    it as text instead leaks the code.
+ * 4. The ?page= part doesn't read the file, it `require()`s it — and require()
+ *    RUNS the file. Point it at a file the attacker planted (via an upload, a
+ *    poisoned log, /tmp) and their code runs on your server.
+ *      (PHP calls this include(); in Node it's require() / import() / eval().)
  */
 import fs from 'fs';
 import path from 'path';
@@ -39,17 +49,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // VULNERABLE
 // ============================================================================
 
-/** VULN #1 — path traversal: user filename joined to a base, no containment. */
+/** VULN #1 — path traversal: we glue the user's filename onto our folder and
+ *  open whatever comes out. If they sneak in "../", we read files we shouldn't. */
 export function readFileVuln(baseDir, userFile) {
-  const resolved = path.join(baseDir, userFile); // BUG: "../" is honoured
-  return fs.readFileSync(resolved, 'utf8');       // reads ANY readable file
+  const resolved = path.join(baseDir, userFile); // BUG: "../" climbs out of baseDir
+  return fs.readFileSync(resolved, 'utf8');       // opens ANY file the server can read
 }
 
-/** VULN #2 — LFI → RCE: require() a user-controlled path (executes it). */
+/** VULN #2 — LFI: instead of READING the user's file, we RUN it. If the
+ *  attacker planted a file first, this executes their code (that's RCE). */
 export async function includePageVuln(baseDir, userPage) {
   const target = path.isAbsolute(userPage) ? userPage : path.join(baseDir, userPage);
-  // Dynamic import runs the module's top-level code = arbitrary execution.
-  const mod = await import(pathToFileURL(target).href); // BUG: never do this
+  // import() doesn't just load the file — it runs the code inside it.
+  const mod = await import(pathToFileURL(target).href); // BUG: never run a user-named file
   return mod;
 }
 
@@ -58,9 +70,11 @@ export async function includePageVuln(baseDir, userPage) {
 // ============================================================================
 
 /**
- * FIX #1 (best) — allowlist: map a token to a known file; reject anything else.
+ * FIX #1 (best) — a menu, not a free text box. Keep a short list of files you're
+ * willing to share. The user picks a NAME from the list ("welcome"); they never
+ * get to type a real path. Anything not on the menu is refused.
  */
-const ALLOWED = { welcome: 'help.txt' };
+const ALLOWED = { welcome: 'help.txt', reader: 'readme.md', license: 'LICENSE' };
 export function readFileAllowlist(baseDir, token) {
   const name = ALLOWED[token];
   if (!name) throw new Error('403 Forbidden: unknown file token');
@@ -68,23 +82,25 @@ export function readFileAllowlist(baseDir, token) {
 }
 
 /**
- * FIX #2 — if you must accept a name, anchor it: resolve, then verify the
- * real path is still INSIDE the intended directory (defeats ../, symlinks).
+ * FIX #2 — if you really must accept a filename, check where it LANDS. Work out
+ * the final, real path, then make sure it still sits inside your intended
+ * folder. If "../" pushed it outside, refuse. (This also stops shortcut tricks.)
  */
 export function readFileAnchored(baseDir, userFile) {
-  const root = fs.realpathSync(baseDir);
-  const resolved = path.resolve(root, userFile);
-  // realpath the parent so symlinks can't escape; then prefix-check.
+  const root = fs.realpathSync(baseDir);           // the folder we allow, fully resolved
+  const resolved = path.resolve(root, userFile);   // where the request actually points
+  // If the final path isn't inside our folder, it escaped — block it.
   if (resolved !== root && !resolved.startsWith(root + path.sep)) {
     throw new Error('403 Forbidden: path escapes base directory');
   }
   return fs.readFileSync(resolved, 'utf8');
 }
 
-// FIX #3 — never require()/import() user input. To pick among pages, switch on
-//          an allowlisted key that maps to a *statically imported* module.
-// FIX #4 — keep secrets OUT of the web root; block .env/.git/*.bak at the proxy;
-//          run with least privilege so even a traversal reads little.
+// FIX #3 — never run a file the user named. To switch between pages, map an
+//          allowed name to a module you already imported at the top of the file.
+// FIX #4 — keep secrets OUT of the public folder, block .env/.git/*.bak at the
+//          web server, and give the app the fewest permissions possible, so even
+//          a successful traversal reaches almost nothing.
 
 // ============================================================================
 // LIVE DEMO
