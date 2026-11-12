@@ -76,7 +76,6 @@ export function checkoutSecure(req, coupons) {
   }
   return total;
 }
-
 // ============================================================================
 // LIVE DEMO
 // ============================================================================
@@ -86,15 +85,17 @@ function demo() {
 
   console.log('\n[1] Negative-amount transfer MINTS money:');
   let acc = { bob: 500, mallory: 25 };
+  let amt = 30
   console.log('   before:', JSON.stringify(acc));
-  transferVuln(acc, 'bob', 'mallory', -1000); // bob -= -1000  => bob += 1000
-  console.log('   vuln  transfer(-1000) → ', JSON.stringify(acc), '❌ bob gained $1000');
+  transferVuln(acc, 'bob', 'mallory', amt); // bob -= amt  => bob += 1000
+  console.log('   vuln  transfer(amt) → ', JSON.stringify(acc), '❌ bob gained $' + amt);
 
+  let sec_amt = 30
   acc = { bob: 500, mallory: 25 };
-  try { transferSecure(acc, 'bob', 'mallory', -1000); }
-  catch (e) { console.log('   secure transfer(-1000) → blocked:', e.message, '✅'); }
-  try { transferSecure(acc, 'bob', 'mallory', 99999); }
-  catch (e) { console.log('   secure transfer(99999) → blocked:', e.message, '✅'); }
+  try { transferSecure(acc, 'bob', 'mallory', sec_amt); }
+  catch (e) { console.log('   secure transfer(sec_amt) → blocked:', e.message, '✅'); }
+  try { transferSecure(acc, 'bob', 'mallory', sec_amt); }
+  catch (e) { console.log('   secure transfer(sec_amt) → blocked:', e.message, '✅'); }
 
   console.log('\n[2] Client-trusted price — buy a $1500 laptop for 1 cent:');
   const evilReq = { body: { item: 'laptop', qty: 1, price: 0.01, discount: 0 } };
