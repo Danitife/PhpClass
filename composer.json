@@ -1,0 +1,17 @@
+{
+    "name": "adesanyadaniel/oct-2026",
+    "autoload": {
+        "psr-4": {
+            "Adesanyadaniel\\Oct2026\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Danitife",
+            "email": "boluwatifedaniell29@gmail.com"
+        }
+    ],
+    "require": {
+        "nesbot/carbon": "^3.15"
+    }
+}
