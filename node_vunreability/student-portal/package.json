@@ -1,0 +1,20 @@
+{
+  "name": "student-portal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A local student records portal and defensive security class project",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0"
+  }
+}

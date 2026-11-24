@@ -1,9 +1,6 @@
 # Standalone vulnerability demos (Node.js)
 
-Node ports of the parent-folder PHP teaching files. Each file is **self-contained
-and runnable** — no MongoDB, no network. Each one explains the bug step by step,
-shows the **vulnerable** implementation, the **secure** version right below it,
-and a live demo that runs both so you can see the difference.
+These demos are **self-contained and runnable** without MongoDB or a network connection. The PHP ports show each bug and its fix side by side. The XSS noticeboard uses sample text to demonstrate safe rendering for three common XSS paths.
 
 ```bash
 node demos/file-exposure.js          # path traversal, LFI→RCE, source disclosure
@@ -12,6 +9,7 @@ node demos/logic-flaw.js             # negative amount, client-trusted price, co
 node demos/race-condition.js         # TOCTOU read-modify-write (lost updates)
 node demos/rate-limit.js             # X-Forwarded-For key bypass
 node demos/dev-file-leak.js          # secrets served from the web root
+node demos/xss.js                    # stored, reflected, and DOM-based XSS concepts
 ```
 
 | Demo | PHP original | Vulnerable primitive | Secure fix |
@@ -26,3 +24,13 @@ node demos/dev-file-leak.js          # secrets served from the web root
 > Why Node still has race conditions despite being single-threaded: the event
 > loop runs one callback at a time, but `await` yields it. Concurrent requests
 > interleave in the gap between a read and its write — see `race-condition.js`.
+
+## XSS noticeboard in the browser
+
+From the Node lesson folder, run:
+
+```sh
+node demos/xss.js --html "Market & <strong>offers</strong>" > /tmp/xss-noticeboard.html
+```
+
+Open `/tmp/xss-noticeboard.html` in a browser. The saved flyers and current search term show the angle brackets as text. Edit the draft flyer to see how the browser preview uses `textContent` to display your input.
